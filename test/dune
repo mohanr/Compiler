@@ -1,0 +1,6 @@
+(library
+ (name compiler_test)
+ (libraries scanner)
+ (inline_tests)
+ (preprocess (pps ppx_deriving.show ppx_inline_test ppx_assert ppx_expect))
+ (modules compiler_test))
