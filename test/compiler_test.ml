@@ -1,6 +1,8 @@
 open Scanner
 open Scanner__.Lang1
 open Scanner__.Lang1.Value
+open Scanner__.ByteCode.VM.VMOp
+
 open Stdlib
 type parsed_text = (int, string ) result
 [@@deriving show]
@@ -82,6 +84,17 @@ let%expect_test _=
   Printf.printf "%s" (Format.asprintf "%a" pp_value (fibD (BInt 5)));
   [%expect {| fibxfibxxfibxxfibxxfibxxfibxxfibxxfibxxfibxxfibxxfibxxfibxxfibxxfibxxfibxx(Lang1.Lang.VInt 8) |}]
 
+let%expect_test _=
+
+  eval (Lit (BInt 5));
+  [%expect {| (ByteCode.Value.VInt 5) |}]
+
+let%expect_test _=
+
+  eval (Builtin (Arithmetic (Add, (Lit( BInt( 1 ))),  Lit( BInt 55))));
+  (* eval (Builtin (UnaryArithmetic (Neg, Lit( BInt 55)))); *)
+
+  [%expect {| (ByteCode.Value.VInt 56) |}]
 
 let () =
  Eio_main.run @@ fun env ->
