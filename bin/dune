@@ -1,4 +1,13 @@
+(env (dev (flags (:standard -warn-error -69-37-34-33-27-32-26-66))))
 (executable
  (public_name compiler)
  (name main)
+ (libraries angstrom eio_main containers base
+               llvm
+               llvm.bitreader
+               llvm.analysis
+               llvm.executionengine
+               llvm.target)
+ (link_flags (-cclib -lzstd))
+
 )
