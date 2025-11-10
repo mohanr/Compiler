@@ -1,7 +1,12 @@
 open Eio.Std
+open Angstrom
+
+module type PARSER = sig
+  type consume
+  val parse_string : (int, string) result
+end
 
 module LibAngstrom = struct
-  open Angstrom
 
   let is_whitespace = function
   | '\x20' | '\x0a' | '\x0d' | '\x09' -> true
@@ -70,6 +75,20 @@ end
 
 type parsed_text = (int, string ) result
 [@@deriving show]
+
+let create_parser  (type t) consume  (parsing_fn : consume :t -> 'a -> string -> (int, string) result ) lexer text =
+  let module Parser = struct
+    type consume = t
+    let consume = consume
+
+    let parse_string  =
+      parsing_fn ~consume:consume lexer text
+  end in
+  (module Parser : PARSER with type consume = t )
+
+let parser_setup  text =
+   (create_parser  Consume.All Angstrom.parse_string LibAngstrom.lexer text
+    : (module PARSER with type consume = Consume.t ))
 
 let cli ~stdin ~stdout =
   let buf = Eio.Buf_read.of_flow stdin ~initial_size:100 ~max_size:1_000_000 in
