@@ -97,7 +97,9 @@ let cli ~stdin ~stdout =
     let line = Eio.Buf_read.line buf in
     traceln "> %s" line;
     match line with
-     |line -> let parsed_text = main line in
+     |line -> let (module P : PARSER with type consume = Consume.t ) = parser_setup line in
+              (* let parsed_text = main line in *)
+              let parsed_text = P.parse_string in
                Eio.Flow.copy_string (Fmt.str " %S\n" (show_parsed_text parsed_text)) stdout
    ;
   (* done *)
