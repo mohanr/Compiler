@@ -3,7 +3,7 @@ open Angstrom
 
 module type PARSER = sig
   type consume
-  val parse_string : (int, string) result
+  val parse_string : string ->  (int, string) result
 end
 
 module LibAngstrom = struct
@@ -76,18 +76,35 @@ end
 type parsed_text = (int, string ) result
 [@@deriving show]
 
-let create_parser  (type t) consume  (parsing_fn : consume :t -> 'a -> string -> (int, string) result ) lexer text =
+type _  parsing_fn =
+ Create_angstrom_parser : Consume.t  -> Consume.t parsing_fn
+
+let create_parser  : type a. a parsing_fn ->  (module PARSER  with type consume = a )  =
+  fun a  ->
+  match a with
+  | Create_angstrom_parser ty  ->
   let module Parser = struct
-    type consume = t
-    let consume = consume
+    type consume = a
 
-    let parse_string  =
-      parsing_fn ~consume:consume lexer text
+    let parse_string text =
+    Angstrom.parse_string ~consume:ty LibAngstrom.lexer text
   end in
-  (module Parser : PARSER with type consume = t )
+  (module Parser : PARSER with type consume = a )
 
-let parser_setup  text =
-   (create_parser  Consume.All Angstrom.parse_string LibAngstrom.lexer text
+
+(* let create_parser  (type t) consume  (parsing_fn : consume :t -> 'a -> string -> (int, string) result ) lexer text = *)
+(*   let module Parser = struct *)
+(*     type consume = t *)
+
+(*     let parse_string  = *)
+(*       parsing_fn ~consume:consume lexer text *)
+(*   end in *)
+(*   (module Parser : PARSER with type consume = t ) *)
+
+let parser_setup  (* text *) =
+   (* (create_parser  Consume.All Angstrom.parse_string LibAngstrom.lexer text *)
+   (*  : (module PARSER with type consume = Consume.t )) *)
+   (create_parser (Create_angstrom_parser Consume.All)
     : (module PARSER with type consume = Consume.t ))
 
 let cli ~stdin ~stdout =
@@ -97,9 +114,9 @@ let cli ~stdin ~stdout =
     let line = Eio.Buf_read.line buf in
     traceln "> %s" line;
     match line with
-     |line -> let (module P : PARSER with type consume = Consume.t ) = parser_setup line in
+     |line -> let (module P : PARSER with type consume = Consume.t  ) = parser_setup (* line *) in
               (* let parsed_text = main line in *)
               let parsed_text = P.parse_string in
-               Eio.Flow.copy_string (Fmt.str " %S\n" (show_parsed_text parsed_text)) stdout
+               Eio.Flow.copy_string (Fmt.str " %S\n" (show_parsed_text (parsed_text line))) stdout
    ;
   (* done *)
